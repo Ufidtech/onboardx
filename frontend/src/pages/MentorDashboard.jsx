@@ -11,6 +11,7 @@ import {
   updateDoc,
 } from "firebase/firestore";
 import { useAuth } from "../lib/AuthContext";
+import { whatsappLink } from "../lib/whatsapp";
 
 export default function MentorDashboard() {
   const { user } = useAuth();
@@ -30,11 +31,6 @@ export default function MentorDashboard() {
 
   async function respond(matchId, status) {
     await updateDoc(doc(db, "matches", matchId), { status });
-  }
-
-  function whatsappLink(phone) {
-    const digits = (phone || "").replace(/\D/g, "");
-    return `https://wa.me/${digits}`;
   }
 
   const pending = matches.filter((m) => m.status === "pending");
@@ -69,27 +65,59 @@ export default function MentorDashboard() {
             </div>
           ))}
 
-          {accepted.map((m) => (
-            <div
-              key={m.id}
-              className="border border-gray-200 rounded-lg p-3 flex items-center justify-between"
-            >
-              <div>
-                <p className="text-sm font-medium">{m.learnerName}</p>
-                <p className="text-xs text-gray-500">
-                  Accepted &middot; week {m.currentWeek || 1}
-                </p>
-              </div>
-              <a
-                href={whatsappLink(m.learnerPhone)}
-                target="_blank"
-                rel="noreferrer"
-                className="text-green-700 text-sm"
+          {accepted.map((m) => {
+            const isStuck = m.lastCheckInStatus === "stuck";
+            return (
+              <div
+                key={m.id}
+                className={`border rounded-lg p-3 ${isStuck ? "border-amber-400 bg-amber-50" : "border-gray-200"}`}
               >
-                Message on WhatsApp
-              </a>
-            </div>
-          ))}
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium">{m.learnerName}</p>
+                    <p className="text-xs text-gray-500">
+                      {m.lastCheckInWeek
+                        ? `Week ${m.lastCheckInWeek} \u00b7 ${m.lastCheckInStatus}`
+                        : "No check-in yet"}
+                    </p>
+                  </div>
+                  {!isStuck && (
+                    <a
+                      href={whatsappLink(
+                        m.learnerPhone,
+                        `Hi ${m.learnerName}! I'm your mentor on OnboardX for ${m.learnerInterest}. Excited to help you get started.`,
+                      )}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-green-700 text-sm shrink-0"
+                    >
+                      Message on WhatsApp
+                    </a>
+                  )}
+                </div>
+
+                {isStuck && (
+                  <div className="mt-2 pt-2 border-t border-amber-200">
+                    <p className="text-xs text-amber-800 mb-2">
+                      Flagged as stuck on week {m.lastCheckInWeek} -- a quick
+                      nudge could help.
+                    </p>
+                    <a
+                      href={whatsappLink(
+                        m.learnerPhone,
+                        `Hey ${m.learnerName}, saw you're stuck on week ${m.lastCheckInWeek} -- want to hop on a quick call or chat about it?`,
+                      )}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-block text-sm text-white bg-amber-600 rounded-lg px-3 py-1.5"
+                    >
+                      Send a nudge on WhatsApp
+                    </a>
+                  </div>
+                )}
+              </div>
+            );
+          })}
 
           {matches.length === 0 && (
             <p className="text-sm text-gray-500">No requests yet.</p>

@@ -61,6 +61,26 @@ router.post('/checkin', async (req, res) => {
 
     await upsertOnboardingStatus(userId, { status: adminStatus, statusLabel: adminLabel })
 
+    // Give the mentor visibility into how their mentee is actually doing,
+    // not just whether the match was accepted. Without this, a mentee
+    // could mark every week "Done" and the mentor would never know
+    // otherwise, or never know they're stuck and need a nudge.
+    if (profile.assignedMentorId) {
+      const matchQuery = await db
+        .collection('matches')
+        .where('learnerId', '==', userId)
+        .where('mentorId', '==', profile.assignedMentorId)
+        .limit(1)
+        .get()
+
+      if (!matchQuery.empty) {
+        await matchQuery.docs[0].ref.update({
+          lastCheckInStatus: status,
+          lastCheckInWeek: weekNumber,
+        })
+      }
+    }
+
     res.json({ shoutoutText })
   } catch (err) {
     console.error(err)

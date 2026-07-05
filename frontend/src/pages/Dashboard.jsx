@@ -5,11 +5,7 @@ import Button from "../components/Button";
 import { useAuth } from "../lib/AuthContext";
 import { db } from "../lib/firebase";
 import { doc, getDoc } from "firebase/firestore";
-
-function whatsappLink(phone) {
-  const digits = (phone || "").replace(/\D/g, "");
-  return `https://wa.me/${digits}`;
-}
+import { whatsappLink } from "../lib/whatsapp";
 
 export default function Dashboard() {
   const { user } = useAuth();
@@ -89,7 +85,10 @@ export default function Dashboard() {
               <p className="text-xs text-gray-500">{mentor.specialty}</p>
             </div>
             <a
-              href={whatsappLink(mentor.phone)}
+              href={whatsappLink(
+                mentor.phone,
+                `Hi ${mentor.name}! I'm ${firstName}, matched with you on OnboardX for ${mentor.specialty}. Looking forward to learning from you!`,
+              )}
               target="_blank"
               rel="noreferrer"
               className="text-sm text-green-700"
