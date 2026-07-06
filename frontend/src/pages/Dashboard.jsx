@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, Navigate, useNavigate } from "react-router-dom";
 import Card from "../components/Card";
 import Button from "../components/Button";
 import { useAuth } from "../lib/AuthContext";
@@ -11,6 +11,7 @@ export default function Dashboard() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [name, setName] = useState("");
+  const [role, setRole] = useState(null);
   const [profile, setProfile] = useState(null);
   const [mentor, setMentor] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -23,6 +24,7 @@ export default function Dashboard() {
         getDoc(doc(db, "learnerProfiles", user.uid)),
       ]);
       setName(userSnap.data()?.name || "");
+      setRole(userSnap.data()?.role || "learner");
 
       const profileData = profileSnap.exists() ? profileSnap.data() : null;
       setProfile(profileData);
@@ -42,6 +44,13 @@ export default function Dashboard() {
     return (
       <div className="text-center mt-12 text-sm text-gray-500">Loading...</div>
     );
+  }
+
+  // Mentors have their own dashboard -- `/` is the learner-facing view and
+  // was showing the "Get started" intake prompt to mentors too, since a
+  // mentor account never has a learnerProfiles document of its own.
+  if (role === "mentor") {
+    return <Navigate to="/mentor-dashboard" replace />;
   }
 
   const firstName = name.split(" ")[0] || "there";
