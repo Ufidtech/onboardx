@@ -1,8 +1,21 @@
 @import "tailwindcss";
 
+@theme {
+  --color-ink: #16211f;
+  --color-canvas: #f6f4ef;
+  --color-teal-deep: #0f6f63;
+  --color-teal-mid: #5eaba3;
+  --color-teal-pale: #a8d5cf;
+  --color-amber-flag: #d97706;
+
+  --font-display: "Space Grotesk", sans-serif;
+  --font-body: "IBM Plex Sans", sans-serif;
+  --font-mono: "IBM Plex Mono", monospace;
+}
+
 body {
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  background-color: #f7f6f2;
-  color: #1a1a1a;
+  font-family: var(--font-body);
+  background-color: var(--color-canvas);
+  color: var(--color-ink);
 }

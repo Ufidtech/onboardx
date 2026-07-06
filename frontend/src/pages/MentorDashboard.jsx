@@ -40,7 +40,7 @@ export default function MentorDashboard() {
     <div className="max-w-md mx-auto mt-12 px-4">
       <Card>
         <p className="text-xs text-gray-500 mb-1">Mentor dashboard</p>
-        <h1 className="text-lg font-medium mb-4">
+        <h1 className="font-display text-xl font-semibold mb-4 text-ink">
           {pending.length} pending requests
         </h1>
 

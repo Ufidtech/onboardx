@@ -56,7 +56,9 @@ export default function Intake() {
     <div className="max-w-md mx-auto mt-12 px-4">
       <Card>
         <p className="text-xs text-gray-500 mb-1">Step 1 of 1</p>
-        <h1 className="text-lg font-medium mb-4">Tell us about you</h1>
+        <h1 className="font-display text-xl font-semibold mb-4 text-ink">
+          Tell us about you
+        </h1>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>

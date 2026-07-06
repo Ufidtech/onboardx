@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, Navigate, useNavigate } from "react-router-dom";
 import Card from "../components/Card";
 import Button from "../components/Button";
+import WeekPath from "../components/WeekPath";
 import { useAuth } from "../lib/AuthContext";
 import { db } from "../lib/firebase";
 import { doc, getDoc } from "firebase/firestore";
@@ -46,9 +47,6 @@ export default function Dashboard() {
     );
   }
 
-  // Mentors have their own dashboard -- `/` is the learner-facing view and
-  // was showing the "Get started" intake prompt to mentors too, since a
-  // mentor account never has a learnerProfiles document of its own.
   if (role === "mentor") {
     return <Navigate to="/mentor-dashboard" replace />;
   }
@@ -59,7 +57,9 @@ export default function Dashboard() {
     return (
       <div className="max-w-md mx-auto mt-12 px-4">
         <Card>
-          <p className="text-lg font-medium mb-1">Welcome, {firstName}</p>
+          <p className="font-display text-xl font-semibold mb-1 text-ink">
+            Welcome, {firstName}
+          </p>
           <p className="text-sm text-gray-600 mb-4">
             You haven't started a learning path yet.
           </p>
@@ -76,7 +76,9 @@ export default function Dashboard() {
     <div className="max-w-md mx-auto mt-12 px-4 space-y-4">
       <Card>
         <p className="text-xs text-gray-500 mb-1">Welcome back</p>
-        <p className="text-lg font-medium mb-1">{firstName}</p>
+        <p className="font-display text-xl font-semibold mb-1 text-ink">
+          {firstName}
+        </p>
         <p className="text-sm text-gray-600">
           {pathComplete
             ? "You completed your path"
@@ -90,7 +92,7 @@ export default function Dashboard() {
           <p className="text-xs text-gray-500 mb-2">Your mentor</p>
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium">{mentor.name}</p>
+              <p className="text-sm font-medium text-ink">{mentor.name}</p>
               <p className="text-xs text-gray-500">{mentor.specialty}</p>
             </div>
             <a
@@ -112,9 +114,10 @@ export default function Dashboard() {
         <Card>
           <p className="text-xs text-gray-500 mb-1">Track</p>
           <p className="text-sm text-gray-600">
-            You're on a <span className="font-medium">Self-Guided + AI</span>{" "}
-            track -- all matching mentors are at capacity right now. A mentor
-            can be assigned later if one frees up.
+            You're on a{" "}
+            <span className="font-medium text-ink">Self-Guided + AI</span> track
+            -- all matching mentors are at capacity right now. A mentor can be
+            assigned later if one frees up.
           </p>
         </Card>
       )}
@@ -123,47 +126,20 @@ export default function Dashboard() {
         <Card>
           <p className="text-xs text-gray-500 mb-1">Track</p>
           <p className="text-sm text-gray-600">
-            You're in a <span className="font-medium">Peer Study Group</span>{" "}
-            for {profile.interests}.
+            You're in a{" "}
+            <span className="font-medium text-ink">Peer Study Group</span> for{" "}
+            {profile.interests}.
           </p>
         </Card>
       )}
 
       <Card>
-        <p className="text-xs text-gray-500 mb-2">Your path</p>
-        <div className="space-y-2 mb-4">
-          {profile.generatedPlan.weeks.map((week, i) => {
-            const weekNum = i + 1;
-            const isCurrent = weekNum === currentWeek;
-            const isDone = weekNum < currentWeek;
-            return (
-              <div
-                key={i}
-                className={`border rounded-lg px-3 py-2 text-sm ${
-                  isCurrent ? "border-teal-600 bg-teal-50" : "border-gray-200"
-                }`}
-              >
-                <div className="flex justify-between items-start gap-2">
-                  <span>
-                    Week {weekNum} &middot; {week.topic}
-                  </span>
-                  {isDone && (
-                    <span className="text-teal-700 shrink-0">&#10003;</span>
-                  )}
-                </div>
-                {!isDone && (
-                  <a
-                    href={week.resourceUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="text-xs text-teal-700 underline"
-                  >
-                    Start here &rarr;
-                  </a>
-                )}
-              </div>
-            );
-          })}
+        <p className="text-xs text-gray-500 mb-3">Your path</p>
+        <div className="mb-4">
+          <WeekPath
+            weeks={profile.generatedPlan.weeks}
+            currentWeek={currentWeek}
+          />
         </div>
 
         {pathComplete ? (

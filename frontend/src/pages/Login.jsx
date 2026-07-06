@@ -29,7 +29,9 @@ export default function Login() {
   return (
     <div className="max-w-md mx-auto mt-12 px-4">
       <Card>
-        <h1 className="text-lg font-medium mb-4">Log in</h1>
+        <h1 className="font-display text-xl font-semibold mb-4 text-ink">
+          Log in
+        </h1>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="text-sm text-gray-600">Email</label>

@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import Card from "../components/Card";
 import Button from "../components/Button";
 import { submitCheckIn } from "../lib/api";
@@ -12,6 +13,7 @@ export default function CheckIn() {
   const [shoutout, setShoutout] = useState("");
   const [loading, setLoading] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [error, setError] = useState("");
 
   useEffect(() => {
     if (!user) return;
@@ -21,6 +23,7 @@ export default function CheckIn() {
   }, [user]);
 
   async function handleStatus(status) {
+    setError("");
     setLoading(true);
     try {
       const result = await submitCheckIn({
@@ -30,6 +33,7 @@ export default function CheckIn() {
       });
       setShoutout(result.shoutoutText);
     } catch (err) {
+      setError("Something went wrong submitting your check-in. Try again.");
       console.error(err);
     } finally {
       setLoading(false);
@@ -52,7 +56,9 @@ export default function CheckIn() {
     <div className="max-w-md mx-auto mt-12 px-4">
       <Card>
         <p className="text-xs text-gray-500 mb-1">Week {weekNumber} check-in</p>
-        <h1 className="text-lg font-medium mb-4">How did this week go?</h1>
+        <h1 className="font-display text-xl font-semibold mb-4 text-ink">
+          How did this week go?
+        </h1>
 
         <div className="flex gap-2 mb-4">
           <Button
@@ -78,6 +84,9 @@ export default function CheckIn() {
           </Button>
         </div>
 
+        {loading && <p className="text-sm text-gray-500 mb-2">Submitting...</p>}
+        {error && <p className="text-sm text-red-600 mb-2">{error}</p>}
+
         {shoutout && (
           <div className="bg-teal-50 rounded-lg p-3">
             <p className="text-xs text-teal-800 mb-2">Ready to share</p>
@@ -85,6 +94,11 @@ export default function CheckIn() {
             <Button className="mt-3" onClick={handleCopy}>
               {copied ? "Copied" : "Copy to community group"}
             </Button>
+            <Link to="/">
+              <Button variant="secondary" className="mt-2">
+                Back to dashboard
+              </Button>
+            </Link>
           </div>
         )}
       </Card>
