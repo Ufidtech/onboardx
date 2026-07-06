@@ -54,8 +54,17 @@ router.post('/match', async (req, res) => {
       (a, b) => (a.currentMentees?.length || 0) - (b.currentMentees?.length || 0)
     )[0]
 
+    // Fetch the learner's real profile so the mentor's dashboard has an
+    // actual name/phone to show -- without this, the mentor-side WhatsApp
+    // button had nothing valid to point at.
+    const learnerSnap = await db.collection('users').doc(userId).get()
+    const learner = learnerSnap.data() || {}
+
     const matchRef = await db.collection('matches').add({
       learnerId: userId,
+      learnerName: learner.name || 'A new member',
+      learnerPhone: learner.phone || '',
+      learnerInterest: interests,
       mentorId: mentor.id,
       status: 'pending',
       matchType: 'specialty',
