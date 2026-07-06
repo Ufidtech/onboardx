@@ -6,13 +6,18 @@
 // the link points at an invalid number and WhatsApp opens generically
 // instead of landing on the specific contact.
 export function whatsappLink(phone, message) {
-  let digits = (phone || '').replace(/\D/g, '')
+    let digits = (phone || '').replace(/\D/g, '')
 
-  if (digits.startsWith('0')) {
-    // Local format (leading 0) -- swap it for Nigeria's country code.
-    digits = '234' + digits.slice(1)
-  }
+    if (digits.startsWith('2340')) {
+        // Common mistake: typed BOTH the country code and the local leading
+        // zero (e.g. 2340801234567) -- the 0 right after 234 is redundant
+        // and makes the number one digit too long to be valid.
+        digits = '234' + digits.slice(4)
+    } else if (digits.startsWith('0')) {
+        // Local format (leading 0) -- swap it for Nigeria's country code.
+        digits = '234' + digits.slice(1)
+    }
 
-  const base = `https://wa.me/${digits}`
-  return message ? `${base}?text=${encodeURIComponent(message)}` : base
+    const base = `https://wa.me/${digits}`
+    return message ? `${base}?text=${encodeURIComponent(message)}` : base
 }
