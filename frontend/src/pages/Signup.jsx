@@ -3,6 +3,7 @@ import { useNavigate, Link } from "react-router-dom";
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import { doc, setDoc } from "firebase/firestore";
 import { auth, db } from "../lib/firebase";
+import { friendlyAuthError } from "../lib/authErrors";
 import Card from "../components/Card";
 import Button from "../components/Button";
 
@@ -50,7 +51,7 @@ export default function Signup() {
 
       navigate(role === "mentor" ? "/mentor-dashboard" : "/");
     } catch (err) {
-      setError(err.message.replace("Firebase: ", ""));
+      setError(friendlyAuthError(err));
     } finally {
       setLoading(false);
     }

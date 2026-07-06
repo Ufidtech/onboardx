@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import Card from "../components/Card";
 import Button from "../components/Button";
+import MiniWeekDots from "../components/MiniWeekDots";
 import { db } from "../lib/firebase";
 import {
   collection,
@@ -35,19 +36,26 @@ export default function MentorDashboard() {
 
   const pending = matches.filter((m) => m.status === "pending");
   const accepted = matches.filter((m) => m.status === "accepted");
+  const graduated = accepted.filter(
+    (m) => m.lastCheckInWeek === 4 && m.lastCheckInStatus === "done",
+  );
 
   return (
     <div className="max-w-md mx-auto mt-12 px-4">
       <Card>
         <p className="text-xs text-gray-500 mb-1">Mentor dashboard</p>
-        <h1 className="font-display text-xl font-semibold mb-4 text-ink">
+        <h1 className="font-display text-xl font-semibold mb-1 text-ink">
           {pending.length} pending requests
         </h1>
+        <p className="text-xs font-mono text-gray-500 mb-4">
+          {accepted.length} active mentee{accepted.length === 1 ? "" : "s"}{" "}
+          &middot; {graduated.length} graduated
+        </p>
 
         <div className="space-y-3">
           {pending.map((m) => (
             <div key={m.id} className="border border-gray-200 rounded-lg p-3">
-              <p className="text-sm font-medium">{m.learnerName}</p>
+              <p className="text-sm font-medium text-ink">{m.learnerName}</p>
               <p className="text-xs text-gray-500 mb-2">
                 Wants: {m.learnerInterest}
               </p>
@@ -74,12 +82,18 @@ export default function MentorDashboard() {
               >
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium">{m.learnerName}</p>
-                    <p className="text-xs text-gray-500">
+                    <p className="text-sm font-medium text-ink">
+                      {m.learnerName}
+                    </p>
+                    <p className="text-xs text-gray-500 mb-1">
                       {m.lastCheckInWeek
                         ? `Week ${m.lastCheckInWeek} \u00b7 ${m.lastCheckInStatus}`
                         : "No check-in yet"}
                     </p>
+                    <MiniWeekDots
+                      currentWeek={m.lastCheckInWeek || 0}
+                      stuck={isStuck}
+                    />
                   </div>
                   {!isStuck && (
                     <a

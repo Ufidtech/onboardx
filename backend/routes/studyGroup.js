@@ -30,7 +30,7 @@ router.post('/join-study-group', async (req, res) => {
         const groupRef = db.collection('studyGroups').doc(groupId)
         const groupSnap = await groupRef.get()
 
-        if (groupSnap.exists()) {
+        if (groupSnap.exists) {
             const existing = groupSnap.data()
             if (!existing.members.includes(userId)) {
                 await groupRef.update({ members: [...existing.members, userId] })
