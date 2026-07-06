@@ -1,0 +1,14 @@
+<svg width="680" height="170" viewBox="0 0 680 170" xmlns="http://www.w3.org/2000/svg">
+<line x1="262" y1="115" x2="295" y2="90" stroke="#5eaba3" stroke-width="4" stroke-linecap="round"/>
+<line x1="295" y1="90" x2="330" y2="60" stroke="#2f8f83" stroke-width="4" stroke-linecap="round"/>
+<line x1="330" y1="60" x2="352" y2="40" stroke="#bfe3de" stroke-width="2.5" stroke-linecap="round" marker-end="url(#arrow)"/>
+<defs>
+<marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+<path d="M2 1L8 5L2 9" fill="none" stroke="#bfe3de" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+</marker>
+</defs>
+<circle cx="262" cy="115" r="13" fill="#a8d5cf"/>
+<circle cx="295" cy="90" r="17" fill="#5eaba3"/>
+<circle cx="330" cy="60" r="22" fill="#0f6f63"/>
+<text x="372" y="100" font-size="46" font-weight="700" fill="#1f2937" font-family="sans-serif">Onboard<tspan fill="#0f6f63">X</tspan></text>
+</svg>
