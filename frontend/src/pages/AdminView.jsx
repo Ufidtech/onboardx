@@ -7,6 +7,7 @@ import { collection, onSnapshot } from "firebase/firestore";
 const STATUS_STYLES = {
   pending: "text-gray-500",
   in_progress: "bg-green-100 text-green-800",
+  skipped: "bg-orange-100 text-orange-800",
   stuck: "bg-amber-100 text-amber-800",
   graduated: "bg-teal-100 text-teal-800",
 };

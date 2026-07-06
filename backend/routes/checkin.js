@@ -55,7 +55,7 @@ router.post('/checkin', async (req, res) => {
         adminLabel = `Week ${nextWeek} of 4`
       }
     } else {
-      adminStatus = 'in_progress'
+      adminStatus = 'skipped'
       adminLabel = `Skipped week ${weekNumber}`
     }
 
