@@ -5,7 +5,14 @@ import Button from "../components/Button";
 import WeekPath from "../components/WeekPath";
 import { useAuth } from "../lib/AuthContext";
 import { db } from "../lib/firebase";
-import { doc, getDoc } from "firebase/firestore";
+import {
+  doc,
+  getDoc,
+  collection,
+  query,
+  where,
+  getDocs,
+} from "firebase/firestore";
 import { whatsappLink } from "../lib/whatsapp";
 
 export default function Dashboard() {
@@ -15,6 +22,7 @@ export default function Dashboard() {
   const [role, setRole] = useState(null);
   const [profile, setProfile] = useState(null);
   const [mentor, setMentor] = useState(null);
+  const [matchStatus, setMatchStatus] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -35,6 +43,20 @@ export default function Dashboard() {
           doc(db, "mentorProfiles", profileData.assignedMentorId),
         );
         setMentor(mentorSnap.exists() ? mentorSnap.data() : null);
+
+        // Only let a learner message their mentor once the mentor has
+        // actually accepted -- respects the mentor's choice, rather than
+        // exposing a contact button before they've agreed to anything.
+        const matchQuery = await getDocs(
+          query(
+            collection(db, "matches"),
+            where("learnerId", "==", user.uid),
+            where("mentorId", "==", profileData.assignedMentorId),
+          ),
+        );
+        if (!matchQuery.empty) {
+          setMatchStatus(matchQuery.docs[0].data().status);
+        }
       }
       setLoading(false);
     }
@@ -87,9 +109,23 @@ export default function Dashboard() {
         </p>
       </Card>
 
-      {mentor && (
+      {mentor && matchStatus === "pending" && (
         <Card>
-          <p className="text-xs text-gray-500 mb-2">Your mentor</p>
+          <p className="text-xs text-gray-500 mb-1">Your mentor</p>
+          <p className="text-sm text-gray-600">
+            Your request to{" "}
+            <span className="font-medium text-ink">{mentor.name}</span> is
+            waiting for them to accept -- you'll be able to message them here
+            once they do.
+          </p>
+        </Card>
+      )}
+
+      {mentor && matchStatus === "accepted" && (
+        <Card>
+          <p className="text-xs text-teal-deep font-medium mb-2">
+            &#127881; {mentor.name} accepted your mentorship request!
+          </p>
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-ink">{mentor.name}</p>
@@ -98,7 +134,7 @@ export default function Dashboard() {
             <a
               href={whatsappLink(
                 mentor.phone,
-                `Hi ${mentor.name}! I'm ${firstName}, matched with you on OnboardX for ${mentor.specialty}. Looking forward to learning from you!`,
+                `Hi ${mentor.name}, thank you so much for accepting to mentor me on OnboardX! I'm ${firstName}, really looking forward to learning ${mentor.specialty} from you.`,
               )}
               target="_blank"
               rel="noreferrer"

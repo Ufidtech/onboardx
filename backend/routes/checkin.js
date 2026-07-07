@@ -2,6 +2,7 @@ import { Router } from 'express'
 import { db } from '../services/firebaseAdmin.js'
 import { generateShoutout } from '../services/azureOpenAI.js'
 import { upsertOnboardingStatus } from '../services/onboardingStatus.js'
+import { freeSeatAndRematch } from '../services/rematch.js'
 
 const router = Router()
 
@@ -50,6 +51,12 @@ router.post('/checkin', async (req, res) => {
       if (nextWeek > 4) {
         adminStatus = 'graduated'
         adminLabel = 'Graduated'
+
+        // Free this graduate's mentor seat and immediately check if any
+        // self-guided learner is waiting for exactly this specialty.
+        if (profile.assignedMentorId) {
+          await freeSeatAndRematch(profile.assignedMentorId, userId)
+        }
       } else {
         adminStatus = 'in_progress'
         adminLabel = `Week ${nextWeek} of 4`
