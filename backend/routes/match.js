@@ -82,7 +82,7 @@ router.post('/match', async (req, res) => {
       { merge: true }
     )
 
-    await upsertOnboardingStatus(userId, { mentorName: mentor.name })
+    await upsertOnboardingStatus(userId, { mentorName: mentor.name, mentorPhone: mentor.phone || '' })
 
     res.json({
       matchId: matchRef.id,

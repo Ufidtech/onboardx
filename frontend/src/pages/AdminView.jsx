@@ -3,6 +3,7 @@ import Card from "../components/Card";
 import Button from "../components/Button";
 import { db } from "../lib/firebase";
 import { collection, onSnapshot } from "firebase/firestore";
+import { whatsappLink } from "../lib/whatsapp";
 
 const STATUS_STYLES = {
   pending: "text-gray-500",
@@ -62,14 +63,32 @@ export default function AdminView() {
           <p className="text-xs text-amber-800 font-medium mb-2">
             Needs attention -- {needingAttention.length} stuck
           </p>
-          <div className="space-y-1">
+          <div className="space-y-2">
             {needingAttention.map((r) => (
-              <p key={r.id} className="text-sm text-amber-900">
-                <span className="font-medium">{r.learnerName}</span> &middot;
-                mentor: {r.mentorName || "unassigned"}
-                {" \u00b7 "}
-                <span className="font-mono text-xs">{r.statusLabel}</span>
-              </p>
+              <div
+                key={r.id}
+                className="flex items-center justify-between gap-2"
+              >
+                <p className="text-sm text-amber-900">
+                  <span className="font-medium">{r.learnerName}</span> &middot;
+                  mentor: {r.mentorName || "unassigned"}
+                  {" \u00b7 "}
+                  <span className="font-mono text-xs">{r.statusLabel}</span>
+                </p>
+                {r.mentorPhone && (
+                  <a
+                    href={whatsappLink(
+                      r.mentorPhone,
+                      `Hi ${r.mentorName}, noticed ${r.learnerName} is ${r.statusLabel?.toLowerCase() || "stuck"} -- could you check in with them when you get a chance?`,
+                    )}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-xs text-green-700 shrink-0"
+                  >
+                    Message mentor
+                  </a>
+                )}
+              </div>
             ))}
           </div>
         </Card>

@@ -92,7 +92,7 @@ export default function MentorDashboard() {
                     </p>
                     <MiniWeekDots
                       currentWeek={m.lastCheckInWeek || 0}
-                      stuck={isStuck}
+                      status={m.lastCheckInStatus}
                     />
                   </div>
                   {!isStuck && (
