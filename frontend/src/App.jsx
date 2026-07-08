@@ -3,9 +3,9 @@ import { AuthProvider } from "./lib/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 import AdminRoute from "./components/AdminRoute";
 import AppLayout from "./components/AppLayout";
+import RootRoute from "./components/RootRoute";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
-import Dashboard from "./pages/Dashboard";
 import Intake from "./pages/Intake";
 import PlanView from "./pages/PlanView";
 import CheckIn from "./pages/CheckIn";
@@ -28,14 +28,7 @@ export default function App() {
         <Routes>
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
-          <Route
-            path="/"
-            element={
-              <Protected>
-                <Dashboard />
-              </Protected>
-            }
-          />
+          <Route path="/" element={<RootRoute />} />
           <Route
             path="/intake"
             element={

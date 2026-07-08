@@ -14,6 +14,9 @@ import {
   getDocs,
 } from "firebase/firestore";
 import { whatsappLink } from "../lib/whatsapp";
+import { cancelPendingMatch } from "../lib/api";
+
+const PENDING_TIMEOUT_HOURS = 48;
 
 export default function Dashboard() {
   const { user } = useAuth();
@@ -23,6 +26,9 @@ export default function Dashboard() {
   const [profile, setProfile] = useState(null);
   const [mentor, setMentor] = useState(null);
   const [matchStatus, setMatchStatus] = useState(null);
+  const [matchId, setMatchId] = useState(null);
+  const [matchCreatedAt, setMatchCreatedAt] = useState(null);
+  const [cancelling, setCancelling] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -55,13 +61,32 @@ export default function Dashboard() {
           ),
         );
         if (!matchQuery.empty) {
-          setMatchStatus(matchQuery.docs[0].data().status);
+          const matchDoc = matchQuery.docs[0];
+          setMatchStatus(matchDoc.data().status);
+          setMatchId(matchDoc.id);
+          setMatchCreatedAt(matchDoc.data().createdAt);
         }
       }
       setLoading(false);
     }
     load();
   }, [user]);
+
+  async function handleCancelPending() {
+    if (!matchId || !profile?.assignedMentorId) return;
+    setCancelling(true);
+    try {
+      await cancelPendingMatch({
+        userId: user.uid,
+        matchId,
+        mentorId: profile.assignedMentorId,
+      });
+      window.location.reload();
+    } catch (err) {
+      console.error(err);
+      setCancelling(false);
+    }
+  }
 
   if (loading) {
     return (
@@ -112,12 +137,29 @@ export default function Dashboard() {
       {mentor && matchStatus === "pending" && (
         <Card>
           <p className="text-xs text-gray-500 mb-1">Your mentor</p>
-          <p className="text-sm text-gray-600">
+          <p className="text-sm text-gray-600 mb-2">
             Your request to{" "}
             <span className="font-medium text-ink">{mentor.name}</span> is
             waiting for them to accept -- you'll be able to message them here
             once they do.
           </p>
+          {matchCreatedAt &&
+            Date.now() - new Date(matchCreatedAt).getTime() >
+              PENDING_TIMEOUT_HOURS * 60 * 60 * 1000 && (
+              <div className="pt-2 border-t border-gray-200">
+                <p className="text-xs text-gray-500 mb-2">
+                  This has been pending a while. You can switch to a self-guided
+                  track instead of waiting.
+                </p>
+                <Button
+                  variant="secondary"
+                  onClick={handleCancelPending}
+                  disabled={cancelling}
+                >
+                  {cancelling ? "Switching..." : "Switch to Self-Guided + AI"}
+                </Button>
+              </div>
+            )}
         </Card>
       )}
 

@@ -37,3 +37,9 @@ export function generateNextPlan({ userId }) {
 export function joinStudyGroup({ userId }) {
   return post('/api/join-study-group', { userId })
 }
+
+// Cancels a stale pending mentor request and switches the learner to
+// Self-Guided + AI instead of waiting indefinitely for a response
+export function cancelPendingMatch({ userId, matchId, mentorId }) {
+  return post('/api/cancel-pending-match', { userId, matchId, mentorId })
+}

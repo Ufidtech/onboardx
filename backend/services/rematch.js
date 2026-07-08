@@ -28,9 +28,22 @@ export async function freeSeatAndRematch(mentorId, graduatingLearnerId) {
         .get()
 
     const specialty = (mentor.specialty || '').toLowerCase()
-    const waitingLearnerDoc = selfGuidedSnap.docs.find((d) =>
+    const matchingCandidates = selfGuidedSnap.docs.filter((d) =>
         (d.data().interests || '').toLowerCase().includes(specialty)
     )
+
+    // FAIRNESS FIX: without this, whichever self-guided learner happened to
+    // come first in Firestore's arbitrary result order got matched -- not
+    // necessarily whoever had been waiting longest. Sorting by
+    // `selfGuidedSince` (set the moment they were routed to this track)
+    // ensures the longest-waiting learner is prioritized.
+    matchingCandidates.sort((a, b) => {
+        const aTime = a.data().selfGuidedSince || ''
+        const bTime = b.data().selfGuidedSince || ''
+        return aTime.localeCompare(bTime)
+    })
+
+    const waitingLearnerDoc = matchingCandidates[0]
 
     if (!waitingLearnerDoc) return
 
