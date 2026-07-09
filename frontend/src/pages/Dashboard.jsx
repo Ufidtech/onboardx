@@ -17,6 +17,7 @@ import { whatsappLink } from "../lib/whatsapp";
 import { cancelPendingMatch } from "../lib/api";
 
 const PENDING_TIMEOUT_HOURS = 48;
+const CELEBRATION_WINDOW_HOURS = 48;
 
 export default function Dashboard() {
   const { user } = useAuth();
@@ -28,6 +29,7 @@ export default function Dashboard() {
   const [matchStatus, setMatchStatus] = useState(null);
   const [matchId, setMatchId] = useState(null);
   const [matchCreatedAt, setMatchCreatedAt] = useState(null);
+  const [matchAcceptedAt, setMatchAcceptedAt] = useState(null);
   const [cancelling, setCancelling] = useState(false);
   const [loading, setLoading] = useState(true);
 
@@ -65,6 +67,7 @@ export default function Dashboard() {
           setMatchStatus(matchDoc.data().status);
           setMatchId(matchDoc.id);
           setMatchCreatedAt(matchDoc.data().createdAt);
+          setMatchAcceptedAt(matchDoc.data().acceptedAt || null);
         }
       }
       setLoading(false);
@@ -163,30 +166,45 @@ export default function Dashboard() {
         </Card>
       )}
 
-      {mentor && matchStatus === "accepted" && (
-        <Card>
-          <p className="text-xs text-teal-deep font-medium mb-2">
-            &#127881; {mentor.name} accepted your mentorship request!
-          </p>
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-ink">{mentor.name}</p>
-              <p className="text-xs text-gray-500">{mentor.specialty}</p>
-            </div>
-            <a
-              href={whatsappLink(
-                mentor.phone,
-                `Hi ${mentor.name}, thank you so much for accepting to mentor me on OnboardX! I'm ${firstName}, really looking forward to learning ${mentor.specialty} from you.`,
+      {mentor &&
+        matchStatus === "accepted" &&
+        (() => {
+          const isRecent =
+            matchAcceptedAt &&
+            Date.now() - new Date(matchAcceptedAt).getTime() <
+              CELEBRATION_WINDOW_HOURS * 60 * 60 * 1000;
+          return (
+            <Card>
+              {isRecent && (
+                <p className="text-xs text-teal-deep font-medium mb-2">
+                  &#127881; {mentor.name} accepted your mentorship request!
+                </p>
               )}
-              target="_blank"
-              rel="noreferrer"
-              className="text-sm text-green-700"
-            >
-              Message on WhatsApp
-            </a>
-          </div>
-        </Card>
-      )}
+              {!isRecent && (
+                <p className="text-xs text-gray-500 mb-2">Your mentor</p>
+              )}
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-ink">{mentor.name}</p>
+                  <p className="text-xs text-gray-500">{mentor.specialty}</p>
+                </div>
+                <a
+                  href={whatsappLink(
+                    mentor.phone,
+                    isRecent
+                      ? `Hi ${mentor.name}, thank you so much for accepting to mentor me on OnboardX! I'm ${firstName}, really looking forward to learning ${mentor.specialty} from you.`
+                      : `Hi ${mentor.name}, it's ${firstName} from OnboardX -- just checking in!`,
+                  )}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-sm text-green-700"
+                >
+                  Message on WhatsApp
+                </a>
+              </div>
+            </Card>
+          );
+        })()}
 
       {!mentor && profile.track === "self-guided" && (
         <Card>

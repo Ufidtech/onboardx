@@ -31,7 +31,11 @@ export default function MentorDashboard() {
   }, [user]);
 
   async function respond(matchId, status) {
-    await updateDoc(doc(db, "matches", matchId), { status });
+    const patch = { status };
+    if (status === "accepted") {
+      patch.acceptedAt = new Date().toISOString();
+    }
+    await updateDoc(doc(db, "matches", matchId), patch);
   }
 
   const pending = matches.filter((m) => m.status === "pending");
