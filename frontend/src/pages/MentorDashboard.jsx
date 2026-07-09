@@ -17,6 +17,7 @@ import { whatsappLink } from "../lib/whatsapp";
 export default function MentorDashboard() {
   const { user } = useAuth();
   const [matches, setMatches] = useState([]);
+  const [subscribeError, setSubscribeError] = useState("");
 
   useEffect(() => {
     if (!user) return;
@@ -24,9 +25,16 @@ export default function MentorDashboard() {
       collection(db, "matches"),
       where("mentorId", "==", user.uid),
     );
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      setMatches(snapshot.docs.map((d) => ({ id: d.id, ...d.data() })));
-    });
+    const unsubscribe = onSnapshot(
+      q,
+      (snapshot) => {
+        setMatches(snapshot.docs.map((d) => ({ id: d.id, ...d.data() })));
+      },
+      (err) => {
+        console.error(err);
+        setSubscribeError("Something went wrong loading your mentee requests.");
+      },
+    );
     return unsubscribe;
   }, [user]);
 
@@ -46,6 +54,13 @@ export default function MentorDashboard() {
 
   return (
     <div className="max-w-md mx-auto mt-12 px-4">
+      {subscribeError && (
+        <Card className="mb-4">
+          <p className="text-sm text-red-600 mb-3">{subscribeError}</p>
+          <Button onClick={() => window.location.reload()}>Try again</Button>
+        </Card>
+      )}
+
       <Card>
         <p className="text-xs text-gray-500 mb-1">Mentor dashboard</p>
         <h1 className="font-display text-xl font-semibold mb-1 text-ink">

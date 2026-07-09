@@ -14,12 +14,18 @@ export default function CheckIn() {
   const [loading, setLoading] = useState(false);
   const [copied, setCopied] = useState(false);
   const [error, setError] = useState("");
+  const [loadError, setLoadError] = useState("");
 
   useEffect(() => {
     if (!user) return;
-    getDoc(doc(db, "learnerProfiles", user.uid)).then((snap) => {
-      setWeekNumber(snap.data()?.currentWeek || 1);
-    });
+    getDoc(doc(db, "learnerProfiles", user.uid))
+      .then((snap) => {
+        setWeekNumber(snap.data()?.currentWeek || 1);
+      })
+      .catch((err) => {
+        console.error(err);
+        setLoadError("Something went wrong loading your check-in.");
+      });
   }, [user]);
 
   async function handleStatus(status) {
@@ -44,6 +50,15 @@ export default function CheckIn() {
     navigator.clipboard.writeText(shoutout);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  }
+
+  if (loadError) {
+    return (
+      <div className="max-w-md mx-auto mt-12 px-4 text-center">
+        <p className="text-sm text-red-600 mb-3">{loadError}</p>
+        <Button onClick={() => window.location.reload()}>Try again</Button>
+      </div>
+    );
   }
 
   if (weekNumber === null) {

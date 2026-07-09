@@ -32,45 +32,52 @@ export default function Dashboard() {
   const [matchAcceptedAt, setMatchAcceptedAt] = useState(null);
   const [cancelling, setCancelling] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
 
   useEffect(() => {
     if (!user) return;
     async function load() {
-      const [userSnap, profileSnap] = await Promise.all([
-        getDoc(doc(db, "users", user.uid)),
-        getDoc(doc(db, "learnerProfiles", user.uid)),
-      ]);
-      setName(userSnap.data()?.name || "");
-      setRole(userSnap.data()?.role || "learner");
+      try {
+        const [userSnap, profileSnap] = await Promise.all([
+          getDoc(doc(db, "users", user.uid)),
+          getDoc(doc(db, "learnerProfiles", user.uid)),
+        ]);
+        setName(userSnap.data()?.name || "");
+        setRole(userSnap.data()?.role || "learner");
 
-      const profileData = profileSnap.exists() ? profileSnap.data() : null;
-      setProfile(profileData);
+        const profileData = profileSnap.exists() ? profileSnap.data() : null;
+        setProfile(profileData);
 
-      if (profileData?.assignedMentorId) {
-        const mentorSnap = await getDoc(
-          doc(db, "mentorProfiles", profileData.assignedMentorId),
-        );
-        setMentor(mentorSnap.exists() ? mentorSnap.data() : null);
+        if (profileData?.assignedMentorId) {
+          const mentorSnap = await getDoc(
+            doc(db, "mentorProfiles", profileData.assignedMentorId),
+          );
+          setMentor(mentorSnap.exists() ? mentorSnap.data() : null);
 
-        // Only let a learner message their mentor once the mentor has
-        // actually accepted -- respects the mentor's choice, rather than
-        // exposing a contact button before they've agreed to anything.
-        const matchQuery = await getDocs(
-          query(
-            collection(db, "matches"),
-            where("learnerId", "==", user.uid),
-            where("mentorId", "==", profileData.assignedMentorId),
-          ),
-        );
-        if (!matchQuery.empty) {
-          const matchDoc = matchQuery.docs[0];
-          setMatchStatus(matchDoc.data().status);
-          setMatchId(matchDoc.id);
-          setMatchCreatedAt(matchDoc.data().createdAt);
-          setMatchAcceptedAt(matchDoc.data().acceptedAt || null);
+          // Only let a learner message their mentor once the mentor has
+          // actually accepted -- respects the mentor's choice, rather than
+          // exposing a contact button before they've agreed to anything.
+          const matchQuery = await getDocs(
+            query(
+              collection(db, "matches"),
+              where("learnerId", "==", user.uid),
+              where("mentorId", "==", profileData.assignedMentorId),
+            ),
+          );
+          if (!matchQuery.empty) {
+            const matchDoc = matchQuery.docs[0];
+            setMatchStatus(matchDoc.data().status);
+            setMatchId(matchDoc.id);
+            setMatchCreatedAt(matchDoc.data().createdAt);
+            setMatchAcceptedAt(matchDoc.data().acceptedAt || null);
+          }
         }
+      } catch (err) {
+        console.error(err);
+        setLoadError("Something went wrong loading your dashboard.");
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     }
     load();
   }, [user]);
@@ -94,6 +101,15 @@ export default function Dashboard() {
   if (loading) {
     return (
       <div className="text-center mt-12 text-sm text-gray-500">Loading...</div>
+    );
+  }
+
+  if (loadError) {
+    return (
+      <div className="max-w-md mx-auto mt-12 px-4 text-center">
+        <p className="text-sm text-red-600 mb-3">{loadError}</p>
+        <Button onClick={() => window.location.reload()}>Try again</Button>
+      </div>
     );
   }
 
