@@ -19,7 +19,7 @@ let credential
 if (process.env.FIREBASE_SERVICE_ACCOUNT) {
     credential = cert(JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT))
 } else {
-    credential = cert('./service-account.json')
+    credential = cert('../service-account.json')
 }
 
 const app = initializeApp({ credential })
