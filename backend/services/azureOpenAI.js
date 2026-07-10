@@ -46,11 +46,17 @@ Verified resource options (select ONLY from this list, by exact id):
 ${optionsList}
 
 Pick exactly 4 ids from the list above, in a sensible order for a 4-week
-beginner plan matching the learner's stated interest (you may repeat an id
-if genuinely nothing else fits, but prefer variety). For each pick, write one
-short, encouraging sentence explaining why it fits them this week -- this
-sentence is the ONLY thing you should generate freely; do not include a URL
-or invent a resource name in it.
+beginner plan matching the learner's stated interest. If the learner's
+interest genuinely does not match any specific resource well (e.g. a topic
+like cybersecurity, DevOps, or a career path not covered by a dedicated
+resource), it is better to honestly pick the general catalog/browse item
+(tagged "general") for those weeks and say so in the encouragement --
+for example "Browse the catalog for X since we don't have a dedicated
+track yet" -- rather than forcing an unrelated specific resource to look
+like a match it isn't. For each pick, write one short, encouraging
+sentence explaining why it fits them this week -- this sentence is the
+ONLY thing you should generate freely; do not include a URL or invent a
+resource name in it.
 
 Respond ONLY with valid JSON, no markdown fences, in this exact shape:
 {"title": "short track name", "weeks": [{"id": "exact-id-from-list", "encouragement": "short sentence"}, ...4 total]}`
