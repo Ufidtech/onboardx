@@ -8,6 +8,7 @@ import { db } from "../lib/firebase";
 import {
   doc,
   getDoc,
+  updateDoc,
   collection,
   query,
   where,
@@ -17,7 +18,6 @@ import { whatsappLink } from "../lib/whatsapp";
 import { cancelPendingMatch } from "../lib/api";
 
 const PENDING_TIMEOUT_HOURS = 48;
-const CELEBRATION_WINDOW_HOURS = 48;
 
 export default function Dashboard() {
   const { user } = useAuth();
@@ -28,8 +28,9 @@ export default function Dashboard() {
   const [mentor, setMentor] = useState(null);
   const [matchStatus, setMatchStatus] = useState(null);
   const [matchId, setMatchId] = useState(null);
+  const [matchType, setMatchType] = useState(null);
   const [matchCreatedAt, setMatchCreatedAt] = useState(null);
-  const [matchAcceptedAt, setMatchAcceptedAt] = useState(null);
+  const [celebrationDismissed, setCelebrationDismissed] = useState(true);
   const [cancelling, setCancelling] = useState(false);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
@@ -66,10 +67,15 @@ export default function Dashboard() {
           );
           if (!matchQuery.empty) {
             const matchDoc = matchQuery.docs[0];
-            setMatchStatus(matchDoc.data().status);
+            const matchData = matchDoc.data();
+            setMatchStatus(matchData.status);
             setMatchId(matchDoc.id);
-            setMatchCreatedAt(matchDoc.data().createdAt);
-            setMatchAcceptedAt(matchDoc.data().acceptedAt || null);
+            setMatchType(matchData.matchType || null);
+            setMatchCreatedAt(matchData.createdAt);
+            // Explicit dismiss, not a silent timer -- the learner decides
+            // when they've "seen enough" of the celebration, rather than
+            // it quietly expiring after some fixed number of hours.
+            setCelebrationDismissed(Boolean(matchData.celebrationDismissed));
           }
         }
       } catch (err) {
@@ -95,6 +101,19 @@ export default function Dashboard() {
     } catch (err) {
       console.error(err);
       setCancelling(false);
+    }
+  }
+
+  async function handleDismissCelebration() {
+    setCelebrationDismissed(true);
+    if (matchId) {
+      try {
+        await updateDoc(doc(db, "matches", matchId), {
+          celebrationDismissed: true,
+        });
+      } catch (err) {
+        console.error(err);
+      }
     }
   }
 
@@ -156,12 +175,20 @@ export default function Dashboard() {
       {mentor && matchStatus === "pending" && (
         <Card>
           <p className="text-xs text-gray-500 mb-1">Your mentor</p>
-          <p className="text-sm text-gray-600 mb-2">
-            Your request to{" "}
-            <span className="font-medium text-ink">{mentor.name}</span> is
-            waiting for them to accept -- you'll be able to message them here
-            once they do.
-          </p>
+          {matchType === "rematch" ? (
+            <p className="text-sm text-teal-deep font-medium mb-2">
+              &#127881; A mentor in your field just opened up! You've been
+              matched with <span className="text-ink">{mentor.name}</span> --
+              waiting for them to accept.
+            </p>
+          ) : (
+            <p className="text-sm text-gray-600 mb-2">
+              Your request to{" "}
+              <span className="font-medium text-ink">{mentor.name}</span> is
+              waiting for them to accept -- you'll be able to message them here
+              once they do.
+            </p>
+          )}
           {matchCreatedAt &&
             Date.now() - new Date(matchCreatedAt).getTime() >
               PENDING_TIMEOUT_HOURS * 60 * 60 * 1000 && (
@@ -182,45 +209,45 @@ export default function Dashboard() {
         </Card>
       )}
 
-      {mentor &&
-        matchStatus === "accepted" &&
-        (() => {
-          const isRecent =
-            matchAcceptedAt &&
-            Date.now() - new Date(matchAcceptedAt).getTime() <
-              CELEBRATION_WINDOW_HOURS * 60 * 60 * 1000;
-          return (
-            <Card>
-              {isRecent && (
-                <p className="text-xs text-teal-deep font-medium mb-2">
-                  &#127881; {mentor.name} accepted your mentorship request!
-                </p>
+      {mentor && matchStatus === "accepted" && (
+        <Card>
+          {!celebrationDismissed && (
+            <div className="mb-2 pb-2 border-b border-gray-100">
+              <p className="text-xs text-teal-deep font-medium mb-2">
+                &#127881; {mentor.name} accepted your mentorship request!
+              </p>
+              <button
+                onClick={handleDismissCelebration}
+                className="text-xs text-gray-500 underline"
+              >
+                Got it, thanks!
+              </button>
+            </div>
+          )}
+          {celebrationDismissed && (
+            <p className="text-xs text-gray-500 mb-2">Your mentor</p>
+          )}
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-ink">{mentor.name}</p>
+              <p className="text-xs text-gray-500">{mentor.specialty}</p>
+            </div>
+            <a
+              href={whatsappLink(
+                mentor.phone,
+                !celebrationDismissed
+                  ? `Hi ${mentor.name}, thank you so much for accepting to mentor me on OnboardX! I'm ${firstName}, really looking forward to learning ${mentor.specialty} from you.`
+                  : `Hi ${mentor.name}, it's ${firstName} from OnboardX -- just checking in!`,
               )}
-              {!isRecent && (
-                <p className="text-xs text-gray-500 mb-2">Your mentor</p>
-              )}
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-ink">{mentor.name}</p>
-                  <p className="text-xs text-gray-500">{mentor.specialty}</p>
-                </div>
-                <a
-                  href={whatsappLink(
-                    mentor.phone,
-                    isRecent
-                      ? `Hi ${mentor.name}, thank you so much for accepting to mentor me on OnboardX! I'm ${firstName}, really looking forward to learning ${mentor.specialty} from you.`
-                      : `Hi ${mentor.name}, it's ${firstName} from OnboardX -- just checking in!`,
-                  )}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="text-sm text-green-700"
-                >
-                  Message on WhatsApp
-                </a>
-              </div>
-            </Card>
-          );
-        })()}
+              target="_blank"
+              rel="noreferrer"
+              className="text-sm text-green-700"
+            >
+              Message on WhatsApp
+            </a>
+          </div>
+        </Card>
+      )}
 
       {!mentor && profile.track === "self-guided" && (
         <Card>

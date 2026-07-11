@@ -5,6 +5,7 @@ import { auth } from '../lib/firebase'
 import { friendlyAuthError } from '../lib/authErrors'
 import Card from '../components/Card'
 import Button from '../components/Button'
+import PasswordInput from '../components/PasswordInput'
 
 export default function Login() {
   const navigate = useNavigate()
@@ -45,12 +46,10 @@ export default function Login() {
 
           <div>
             <label className="text-sm text-gray-600">Password</label>
-            <input
-              type="password"
+            <PasswordInput
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="mt-1 w-full rounded-lg border border-gray-300 p-2 text-sm"
             />
           </div>
 
