@@ -94,10 +94,20 @@ export default function MentorDashboard() {
 
           {accepted.map((m) => {
             const isStuck = m.lastCheckInStatus === "stuck";
+            const isGraduated =
+              m.lastCheckInWeek === 4 && m.lastCheckInStatus === "done";
+            const isWeeklyReview =
+              m.lastCheckInStatus === "done" && m.lastCheckInWeek < 4;
             return (
               <div
                 key={m.id}
-                className={`border rounded-lg p-3 ${isStuck ? "border-amber-400 bg-amber-50" : "border-gray-200"}`}
+                className={`border rounded-lg p-3 ${
+                  isStuck
+                    ? "border-amber-400 bg-amber-50"
+                    : isGraduated
+                      ? "border-teal-300 bg-teal-50"
+                      : "border-gray-200"
+                }`}
               >
                 <div className="flex items-center justify-between">
                   <div>
@@ -114,7 +124,7 @@ export default function MentorDashboard() {
                       status={m.lastCheckInStatus}
                     />
                   </div>
-                  {!isStuck && (
+                  {!isStuck && !isGraduated && !isWeeklyReview && (
                     <a
                       href={whatsappLink(
                         m.learnerPhone,
@@ -145,6 +155,46 @@ export default function MentorDashboard() {
                       className="inline-block text-sm text-white bg-amber-600 rounded-lg px-3 py-1.5"
                     >
                       Send a nudge on WhatsApp
+                    </a>
+                  </div>
+                )}
+
+                {isWeeklyReview && (
+                  <div className="mt-2 pt-2 border-t border-gray-200">
+                    <p className="text-xs text-gray-600 mb-2">
+                      Finished week {m.lastCheckInWeek} -- a quick review could
+                      help them going into next week.
+                    </p>
+                    <a
+                      href={whatsappLink(
+                        m.learnerPhone,
+                        `Hey ${m.learnerName}, nice work finishing week ${m.lastCheckInWeek}! Got a few minutes to hop on a quick call so I can hear how it went and share a couple of tips before week ${m.lastCheckInWeek + 1}?`,
+                      )}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-block text-sm text-white bg-teal-mid rounded-lg px-3 py-1.5"
+                    >
+                      Review week {m.lastCheckInWeek} together
+                    </a>
+                  </div>
+                )}
+
+                {isGraduated && (
+                  <div className="mt-2 pt-2 border-t border-teal-200">
+                    <p className="text-xs text-teal-800 mb-2">
+                      &#127881; Finished all 4 weeks -- a wrap-up chat is a
+                      great way to close it out.
+                    </p>
+                    <a
+                      href={whatsappLink(
+                        m.learnerPhone,
+                        `Congrats ${m.learnerName} on finishing your 4-week path! 🎉 Would love to hop on a quick call to hear what you learned and talk about next steps.`,
+                      )}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-block text-sm text-white bg-teal-deep rounded-lg px-3 py-1.5"
+                    >
+                      Congratulate &amp; schedule a wrap-up call
                     </a>
                   </div>
                 )}
