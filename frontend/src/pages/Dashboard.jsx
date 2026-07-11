@@ -31,6 +31,8 @@ export default function Dashboard() {
   const [matchType, setMatchType] = useState(null);
   const [matchCreatedAt, setMatchCreatedAt] = useState(null);
   const [celebrationDismissed, setCelebrationDismissed] = useState(true);
+  const [studyGroup, setStudyGroup] = useState(null);
+  const [groupMessageCopied, setGroupMessageCopied] = useState(false);
   const [cancelling, setCancelling] = useState(false);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
@@ -48,6 +50,13 @@ export default function Dashboard() {
 
         const profileData = profileSnap.exists() ? profileSnap.data() : null;
         setProfile(profileData);
+
+        if (profileData?.studyGroupId) {
+          const groupSnap = await getDoc(
+            doc(db, "studyGroups", profileData.studyGroupId),
+          );
+          setStudyGroup(groupSnap.exists() ? groupSnap.data() : null);
+        }
 
         if (profileData?.assignedMentorId) {
           const mentorSnap = await getDoc(
@@ -115,6 +124,13 @@ export default function Dashboard() {
         console.error(err);
       }
     }
+  }
+
+  function handleCopyGroupMessage() {
+    const message = `Looking for others in my Peer Study Group for ${profile.interests} on OnboardX! Anyone else here working on this?`;
+    navigator.clipboard.writeText(message);
+    setGroupMessageCopied(true);
+    setTimeout(() => setGroupMessageCopied(false), 2000);
   }
 
   if (loading) {
@@ -264,11 +280,24 @@ export default function Dashboard() {
       {profile.track === "peer-group" && (
         <Card>
           <p className="text-xs text-gray-500 mb-1">Track</p>
-          <p className="text-sm text-gray-600">
+          <p className="text-sm text-gray-600 mb-3">
             You're in a{" "}
             <span className="font-medium text-ink">Peer Study Group</span> for{" "}
-            {profile.interests}.
+            {profile.interests}
+            {studyGroup && (
+              <>
+                {" "}
+                &middot; {studyGroup.members?.length || 1} member
+                {(studyGroup.members?.length || 1) === 1 ? "" : "s"} so far
+              </>
+            )}
+            .
           </p>
+          <Button variant="secondary" onClick={handleCopyGroupMessage}>
+            {groupMessageCopied
+              ? "Copied"
+              : "Copy message to find others in the group"}
+          </Button>
         </Card>
       )}
 
