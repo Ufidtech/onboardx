@@ -46,6 +46,14 @@ export default function MentorDashboard() {
     await updateDoc(doc(db, "matches", matchId), patch);
   }
 
+  // Marks this week's review (or the graduation wrap-up) as done, so the
+  // prompt stops showing until the mentee completes their *next* week --
+  // without this, "Review week 2 together" would show forever even after
+  // the mentor already had that conversation.
+  async function markReviewed(matchId, week) {
+    await updateDoc(doc(db, "matches", matchId), { lastReviewedWeek: week });
+  }
+
   const pending = matches.filter((m) => m.status === "pending");
   const accepted = matches.filter((m) => m.status === "accepted");
   const graduated = accepted.filter(
@@ -98,6 +106,8 @@ export default function MentorDashboard() {
               m.lastCheckInWeek === 4 && m.lastCheckInStatus === "done";
             const isWeeklyReview =
               m.lastCheckInStatus === "done" && m.lastCheckInWeek < 4;
+            // Already reviewed THIS specific completed week? Don't show the prompt again.
+            const alreadyReviewed = m.lastReviewedWeek === m.lastCheckInWeek;
             return (
               <div
                 key={m.id}
@@ -159,44 +169,72 @@ export default function MentorDashboard() {
                   </div>
                 )}
 
-                {isWeeklyReview && (
+                {isWeeklyReview && !alreadyReviewed && (
                   <div className="mt-2 pt-2 border-t border-gray-200">
                     <p className="text-xs text-gray-600 mb-2">
                       Finished week {m.lastCheckInWeek} -- a quick review could
                       help them going into next week.
                     </p>
-                    <a
-                      href={whatsappLink(
-                        m.learnerPhone,
-                        `Hey ${m.learnerName}, nice work finishing week ${m.lastCheckInWeek}! Got a few minutes to hop on a quick call so I can hear how it went and share a couple of tips before week ${m.lastCheckInWeek + 1}?`,
-                      )}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="inline-block text-sm text-white bg-teal-mid rounded-lg px-3 py-1.5"
-                    >
-                      Review week {m.lastCheckInWeek} together
-                    </a>
+                    <div className="flex gap-2 flex-wrap">
+                      <a
+                        href={whatsappLink(
+                          m.learnerPhone,
+                          `Hey ${m.learnerName}, nice work finishing week ${m.lastCheckInWeek}! Got a few minutes to hop on a quick call so I can hear how it went and share a couple of tips before week ${m.lastCheckInWeek + 1}?`,
+                        )}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="inline-block text-sm text-white bg-teal-mid rounded-lg px-3 py-1.5"
+                      >
+                        Review week {m.lastCheckInWeek} together
+                      </a>
+                      <button
+                        onClick={() => markReviewed(m.id, m.lastCheckInWeek)}
+                        className="text-xs text-gray-500 underline"
+                      >
+                        Mark as done
+                      </button>
+                    </div>
                   </div>
                 )}
 
-                {isGraduated && (
+                {isWeeklyReview && alreadyReviewed && (
+                  <p className="mt-2 pt-2 border-t border-gray-200 text-xs text-gray-500">
+                    &#10003; Week {m.lastCheckInWeek} review done
+                  </p>
+                )}
+
+                {isGraduated && !alreadyReviewed && (
                   <div className="mt-2 pt-2 border-t border-teal-200">
                     <p className="text-xs text-teal-800 mb-2">
                       &#127881; Finished all 4 weeks -- a wrap-up chat is a
                       great way to close it out.
                     </p>
-                    <a
-                      href={whatsappLink(
-                        m.learnerPhone,
-                        `Congrats ${m.learnerName} on finishing your 4-week path! 🎉 Would love to hop on a quick call to hear what you learned and talk about next steps.`,
-                      )}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="inline-block text-sm text-white bg-teal-deep rounded-lg px-3 py-1.5"
-                    >
-                      Congratulate &amp; schedule a wrap-up call
-                    </a>
+                    <div className="flex gap-2 flex-wrap">
+                      <a
+                        href={whatsappLink(
+                          m.learnerPhone,
+                          `Congrats ${m.learnerName} on finishing your 4-week path! 🎉 Would love to hop on a quick call to hear what you learned and talk about next steps.`,
+                        )}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="inline-block text-sm text-white bg-teal-deep rounded-lg px-3 py-1.5"
+                      >
+                        Congratulate &amp; schedule a wrap-up call
+                      </a>
+                      <button
+                        onClick={() => markReviewed(m.id, 4)}
+                        className="text-xs text-gray-500 underline"
+                      >
+                        Mark as done
+                      </button>
+                    </div>
                   </div>
+                )}
+
+                {isGraduated && alreadyReviewed && (
+                  <p className="mt-2 pt-2 border-t border-teal-200 text-xs text-teal-700">
+                    &#10003; Wrap-up done
+                  </p>
                 )}
               </div>
             );

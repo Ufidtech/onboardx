@@ -20,7 +20,7 @@ export default function AppLayout({ children }) {
 
   return (
     <div>
-      <header className="max-w-2xl mx-auto px-4 pt-6 flex justify-between items-center">
+      <header className="sticky top-0 z-10 bg-canvas/95 backdrop-blur-sm max-w-2xl mx-auto px-4 py-4 flex justify-between items-center">
         <Link to="/" className="flex items-center">
           <img src="/onboardx-logo.svg" alt="OnboardX" className="h-6" />
         </Link>

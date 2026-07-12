@@ -1,6 +1,7 @@
 import { Router } from 'express'
 import { db } from '../services/firebaseAdmin.js'
 import { upsertOnboardingStatus } from '../services/onboardingStatus.js'
+import { checkAndRematchForNewMentor } from '../services/rematch.js'
 
 const router = Router()
 
@@ -23,7 +24,7 @@ async function routeToSelfGuided(userId) {
     { track: 'self-guided', assignedMentorId: null, selfGuidedSince: new Date().toISOString() },
     { merge: true }
   )
-  await upsertOnboardingStatus(userId, { mentorName: 'Self-guided + AI' })
+  await upsertOnboardingStatus(userId, { mentorName: 'Self-guided + AI', track: 'self-guided' })
 }
 
 // POST /api/match
@@ -111,6 +112,7 @@ router.post('/match', async (req, res) => {
     await upsertOnboardingStatus(userId, {
       mentorName: assignedMentor.name,
       mentorPhone: assignedMentor.phone || '',
+      track: 'mentored',
     })
 
     res.json({
@@ -157,6 +159,23 @@ router.post('/cancel-pending-match', async (req, res) => {
   } catch (err) {
     console.error(err)
     res.status(500).json({ error: 'Failed to cancel pending match' })
+  }
+})
+
+// POST /api/mentor-registered
+// Called right after a new mentor signs up. Checks whether any
+// Self-Guided learner is a specialty match for this brand new mentor's
+// open capacity, same as when an existing mentor's seat frees up.
+router.post('/mentor-registered', async (req, res) => {
+  const { mentorId } = req.body
+  if (!mentorId) return res.status(400).json({ error: 'mentorId is required' })
+
+  try {
+    await checkAndRematchForNewMentor(mentorId)
+    res.json({ ok: true })
+  } catch (err) {
+    console.error(err)
+    res.status(500).json({ error: 'Failed to check for waiting learners' })
   }
 })
 

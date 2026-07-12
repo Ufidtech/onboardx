@@ -43,3 +43,8 @@ export function joinStudyGroup({ userId }) {
 export function cancelPendingMatch({ userId, matchId, mentorId }) {
   return post('/api/cancel-pending-match', { userId, matchId, mentorId })
 }
+
+// Checks for a waiting Self-Guided learner the moment a new mentor signs up
+export function checkNewMentorRematch({ mentorId }) {
+  return post('/api/mentor-registered', { mentorId })
+}

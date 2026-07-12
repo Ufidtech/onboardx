@@ -2,7 +2,6 @@ import { Router } from 'express'
 import { db } from '../services/firebaseAdmin.js'
 import { generateShoutout } from '../services/azureOpenAI.js'
 import { upsertOnboardingStatus } from '../services/onboardingStatus.js'
-import { freeSeatAndRematch } from '../services/rematch.js'
 
 const router = Router()
 
@@ -51,12 +50,12 @@ router.post('/checkin', async (req, res) => {
       if (nextWeek > 4) {
         adminStatus = 'graduated'
         adminLabel = 'Graduated'
-
-        // Free this graduate's mentor seat and immediately check if any
-        // self-guided learner is waiting for exactly this specialty.
-        if (profile.assignedMentorId) {
-          await freeSeatAndRematch(profile.assignedMentorId, userId)
-        }
+        // NOTE: we deliberately do NOT free the mentor's seat here.
+        // Finishing week 4 doesn't necessarily mean leaving this mentor --
+        // the learner might choose "Generate my next 4-week Intermediate
+        // Path" and keep the same mentor. The seat is only freed when they
+        // explicitly choose a Peer Study Group instead (see studyGroup.js),
+        // since that's the real "I'm done with this mentor" signal.
       } else {
         adminStatus = 'in_progress'
         adminLabel = `Week ${nextWeek} of 4`

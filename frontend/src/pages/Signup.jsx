@@ -7,6 +7,7 @@ import { friendlyAuthError } from '../lib/authErrors'
 import Card from '../components/Card'
 import Button from '../components/Button'
 import PasswordInput from '../components/PasswordInput'
+import { checkNewMentorRematch } from '../lib/api'
 
 export default function Signup() {
   const navigate = useNavigate()
@@ -50,6 +51,15 @@ export default function Signup() {
           phone,
           currentMentees: [],
         })
+
+        // Immediately check if a Self-Guided learner is waiting for
+        // exactly this specialty -- a fresh mentor has open capacity from
+        // day one, no reason to make a waiting learner sit longer.
+        try {
+          await checkNewMentorRematch({ mentorId: cred.user.uid })
+        } catch (err) {
+          console.error('Rematch check failed (non-fatal):', err)
+        }
       }
 
       navigate(role === 'mentor' ? '/mentor-dashboard' : '/')

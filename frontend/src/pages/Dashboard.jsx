@@ -252,7 +252,7 @@ export default function Dashboard() {
               href={whatsappLink(
                 mentor.phone,
                 !celebrationDismissed
-                  ? `Hi ${mentor.name}, thank you so much for accepting to mentor me on OnboardX! I'm ${firstName}, really looking forward to learning ${mentor.specialty} from you.`
+                  ? `Hi ${mentor.name}, thank you so much for accepting to mentor me on OnboardX! I'm ${firstName}, really looking forward to learning ${mentor.specialty} from you. Do well to reach me via OnboardX so we can keep track of our progress together!`
                   : `Hi ${mentor.name}, it's ${firstName} from OnboardX -- just checking in!`,
               )}
               target="_blank"

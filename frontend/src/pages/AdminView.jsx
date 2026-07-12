@@ -13,23 +13,39 @@ const STATUS_STYLES = {
   graduated: "bg-teal-100 text-teal-800",
 };
 
+const TRACK_LABELS = {
+  mentored: "Mentored",
+  "self-guided": "Self-Guided + AI",
+  "peer-group": "Peer Group",
+};
+
 const REMINDER_MESSAGE = `\uD83D\uDC4B Weekly check-in time! How's your learning path going this week? Drop an update in the group, and shoutout your mentor if they've helped you out \uD83D\uDE80`;
 
 export default function AdminView() {
   const [rows, setRows] = useState([]);
+  const [groups, setGroups] = useState([]);
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     // Denormalized 'onboardingStatus' collection is kept up to date by the
     // backend as matches/check-ins happen -- simpler than joining
     // Users + Matches + CheckIns client-side.
-    const unsubscribe = onSnapshot(
+    const unsubscribeStatus = onSnapshot(
       collection(db, "onboardingStatus"),
       (snapshot) => {
         setRows(snapshot.docs.map((d) => ({ id: d.id, ...d.data() })));
       },
     );
-    return unsubscribe;
+    const unsubscribeGroups = onSnapshot(
+      collection(db, "studyGroups"),
+      (snapshot) => {
+        setGroups(snapshot.docs.map((d) => ({ id: d.id, ...d.data() })));
+      },
+    );
+    return () => {
+      unsubscribeStatus();
+      unsubscribeGroups();
+    };
   }, []);
 
   function copyReminder() {
@@ -63,7 +79,9 @@ export default function AdminView() {
           <p className="text-xs text-amber-800 font-medium mb-2">
             Needs attention -- {needingAttention.length} stuck
           </p>
-          <div className="space-y-2">
+          {/* Capped so a large, real cohort doesn't make this section grow
+              indefinitely down the page -- scrolls internally instead. */}
+          <div className="max-h-[100px] overflow-y-auto space-y-2 pr-1">
             {needingAttention.map((r) => (
               <div
                 key={r.id}
@@ -94,12 +112,41 @@ export default function AdminView() {
         </Card>
       )}
 
+      {groups.length > 0 && (
+        <Card>
+          <p className="text-xs text-gray-500 mb-2">
+            Peer study groups -- WhatsApp has no public API to auto-create a
+            group, so use these contacts to set one up manually if a group is
+            ready.
+          </p>
+          <div className="space-y-3">
+            {groups.map((g) => (
+              <div key={g.id} className="border border-gray-200 rounded-lg p-2">
+                <p className="text-sm font-medium text-ink mb-1">
+                  {g.topic}{" "}
+                  <span className="text-xs text-gray-500 font-normal">
+                    &middot; {g.members?.length || 0} member
+                    {(g.members?.length || 0) === 1 ? "" : "s"}
+                  </span>
+                </p>
+                <p className="text-xs text-gray-600">
+                  {(g.members || [])
+                    .map((m) => `${m.name}${m.phone ? ` (${m.phone})` : ""}`)
+                    .join(", ")}
+                </p>
+              </div>
+            ))}
+          </div>
+        </Card>
+      )}
+
       <Card>
         <table className="w-full text-sm">
           <thead>
             <tr className="text-left text-gray-500 border-b border-gray-200">
               <th className="py-2 font-medium">Learner</th>
               <th className="py-2 font-medium">Mentor</th>
+              <th className="py-2 font-medium">Track</th>
               <th className="py-2 font-medium">Status</th>
             </tr>
           </thead>
@@ -112,6 +159,9 @@ export default function AdminView() {
                     <span className="text-gray-400">Pending</span>
                   )}
                 </td>
+                <td className="py-2 text-xs text-gray-600">
+                  {TRACK_LABELS[r.track] || "\u2014"}
+                </td>
                 <td className="py-2">
                   <span
                     className={`px-2 py-0.5 rounded-md text-xs font-mono ${STATUS_STYLES[r.status] || ""}`}
@@ -123,7 +173,7 @@ export default function AdminView() {
             ))}
             {rows.length === 0 && (
               <tr>
-                <td colSpan={3} className="py-4 text-center text-gray-400">
+                <td colSpan={4} className="py-4 text-center text-gray-400">
                   No members yet.
                 </td>
               </tr>

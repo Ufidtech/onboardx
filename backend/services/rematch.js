@@ -1,26 +1,12 @@
 import { db } from './firebaseAdmin.js'
 
-// Called the moment a mentee graduates. Two jobs:
-// 1. Actually free their seat on the mentor's currentMentees list --
-//    without this, mentor capacity only ever grows, never shrinks, and
-//    "wait for a mentor to free up" could never be true no matter how
-//    long a self-guided learner waited.
-// 2. Immediately check whether any self-guided learner is a specialty
-//    match for this now-freed mentor, and promote the first one found.
-//    Event-triggered at the exact moment of freeing, rather than a
-//    background job polling on a timer -- simpler and instant.
-export async function freeSeatAndRematch(mentorId, graduatingLearnerId) {
-    const mentorRef = db.collection('mentorProfiles').doc(mentorId)
-    const mentorSnap = await mentorRef.get()
-    if (!mentorSnap.exists) return
-
-    const mentor = mentorSnap.data()
-    const updatedMentees = (mentor.currentMentees || []).filter((id) => id !== graduatingLearnerId)
-    await mentorRef.update({ currentMentees: updatedMentees })
-
-    // Only actually free if there's room now -- if this mentor was over
-    // capacity somehow, don't rematch until there's genuinely a seat.
-    if (updatedMentees.length >= 3) return
+// Shared core: given a mentor with room, find the longest-waiting
+// Self-Guided learner whose interest matches their specialty, and create
+// a pending match for them. Used both when a mentor's seat frees up
+// (graduation/leaving) and when a brand new mentor signs up with room
+// from day one.
+async function matchWaitingLearnerToMentor(mentorRef, mentor, currentMentees) {
+    if (currentMentees.length >= 3) return
 
     const selfGuidedSnap = await db
         .collection('learnerProfiles')
@@ -44,7 +30,6 @@ export async function freeSeatAndRematch(mentorId, graduatingLearnerId) {
     })
 
     const waitingLearnerDoc = matchingCandidates[0]
-
     if (!waitingLearnerDoc) return
 
     const learnerId = waitingLearnerDoc.id
@@ -57,16 +42,48 @@ export async function freeSeatAndRematch(mentorId, graduatingLearnerId) {
         learnerName: learnerUser.name || 'A new member',
         learnerPhone: learnerUser.phone || '',
         learnerInterest: learnerProfile.interests || '',
-        mentorId,
+        mentorId: mentorRef.id,
         status: 'pending',
         matchType: 'rematch',
         createdAt: new Date().toISOString(),
     })
 
-    await mentorRef.update({ currentMentees: [...updatedMentees, learnerId] })
+    await mentorRef.update({ currentMentees: [...currentMentees, learnerId] })
 
     await db.collection('learnerProfiles').doc(learnerId).set(
-        { assignedMentorId: mentorId, track: 'mentored' },
+        { assignedMentorId: mentorRef.id, track: 'mentored' },
         { merge: true }
     )
+}
+
+// Called the moment a mentee actually leaves their mentor (graduates AND
+// chooses a Peer Study Group, not just finishing 4 weeks -- see
+// studyGroup.js for why). Frees their seat, then immediately checks for a
+// waiting Self-Guided learner to fill it. Event-triggered, not a
+// background job polling on a timer.
+export async function freeSeatAndRematch(mentorId, leavingLearnerId) {
+    const mentorRef = db.collection('mentorProfiles').doc(mentorId)
+    const mentorSnap = await mentorRef.get()
+    if (!mentorSnap.exists) return
+
+    const mentor = mentorSnap.data()
+    const updatedMentees = (mentor.currentMentees || []).filter((id) => id !== leavingLearnerId)
+    await mentorRef.update({ currentMentees: updatedMentees })
+
+    await matchWaitingLearnerToMentor(mentorRef, mentor, updatedMentees)
+}
+
+// Called right after a brand new mentor signs up. A fresh mentor has
+// empty capacity from day one -- without this, a Self-Guided learner
+// would keep waiting even though a perfectly good mentor just joined,
+// until something else happened to trigger a rematch check.
+export async function checkAndRematchForNewMentor(mentorId) {
+    const mentorRef = db.collection('mentorProfiles').doc(mentorId)
+    const mentorSnap = await mentorRef.get()
+    if (!mentorSnap.exists) return
+
+    const mentor = mentorSnap.data()
+    const currentMentees = mentor.currentMentees || []
+
+    await matchWaitingLearnerToMentor(mentorRef, mentor, currentMentees)
 }
