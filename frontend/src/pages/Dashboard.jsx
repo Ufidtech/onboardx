@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, Navigate, useNavigate } from "react-router-dom";
 import Card from "../components/Card";
+import Spinner from "../components/Spinner";
 import Button from "../components/Button";
 import WeekPath from "../components/WeekPath";
 import { useAuth } from "../lib/AuthContext";
@@ -134,9 +135,7 @@ export default function Dashboard() {
   }
 
   if (loading) {
-    return (
-      <div className="text-center mt-12 text-sm text-gray-500">Loading...</div>
-    );
+    return <Spinner />;
   }
 
   if (loadError) {

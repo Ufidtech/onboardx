@@ -1,5 +1,6 @@
 import { Navigate } from "react-router-dom";
 import { useAuth } from "../lib/AuthContext";
+import Spinner from "./Spinner";
 
 // Reads a comma-separated list of allowed admin emails from an env var,
 // e.g. VITE_ADMIN_EMAILS=lead1@example.com,lead2@example.com
@@ -15,9 +16,7 @@ export default function AdminRoute({ children }) {
   const { user, loading } = useAuth();
 
   if (loading) {
-    return (
-      <div className="text-center mt-12 text-sm text-gray-500">Loading...</div>
-    );
+    return <Spinner />;
   }
 
   const isAdmin = user && ADMIN_EMAILS.includes(user.email.toLowerCase());

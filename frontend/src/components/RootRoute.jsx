@@ -1,4 +1,5 @@
 import { useAuth } from "../lib/AuthContext";
+import Spinner from "./Spinner";
 import AppLayout from "./AppLayout";
 import LandingPage from "../pages/LandingPage";
 import Dashboard from "../pages/Dashboard";
@@ -11,9 +12,7 @@ export default function RootRoute() {
   const { user, loading } = useAuth();
 
   if (loading) {
-    return (
-      <div className="text-center mt-12 text-sm text-gray-500">Loading...</div>
-    );
+    return <Spinner />;
   }
 
   if (!user) {

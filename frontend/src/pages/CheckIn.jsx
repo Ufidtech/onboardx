@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import Card from "../components/Card";
+import Spinner from "../components/Spinner";
 import Button from "../components/Button";
 import { submitCheckIn } from "../lib/api";
 import { useAuth } from "../lib/AuthContext";
@@ -62,9 +63,7 @@ export default function CheckIn() {
   }
 
   if (weekNumber === null) {
-    return (
-      <div className="text-center mt-12 text-sm text-gray-500">Loading...</div>
-    );
+    return <Spinner />;
   }
 
   return (
